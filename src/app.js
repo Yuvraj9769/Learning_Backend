@@ -16,4 +16,10 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(express.static("public")); // to store data on server
 app.use(cookieParser());
 
+//routes  require
+const userRouter = require("./routes/user.routes");
+
+//routes  declaration
+app.use("/api/v1/users", userRouter);
+
 module.exports = app;
