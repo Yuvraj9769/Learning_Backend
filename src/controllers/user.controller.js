@@ -1,10 +1,29 @@
-const asynHandler = require("../utils/asyncHandler");
+const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const uploadOnCloudinary = require("../utils/cloudinary");
 const ApiResponse = require("../utils/ApiResponse");
 const userModel = require("../models/user.model");
 
-const registerUser = asynHandler(async (req, res) => {
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await userModel.findById(userId);
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating refresh and access token"
+    );
+  }
+};
+
+const registerUser = asyncHandler(async (req, res) => {
   //get user data from frontend
   //validation - not empty
   //check if user already exist  -  username,email
@@ -80,4 +99,130 @@ const registerUser = asynHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered Successfully!!"));
 });
 
-module.exports = { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  //get data
+  //check username and email is there?
+  //user find
+  //check password is correct?
+  //if correct generate refresh and access token
+  //send in cookies
+  //login successfully
+
+  const { email, username, password } = req.body;
+
+  if (!(email || username)) {
+    throw new ApiError(400, "User name and email is required.");
+  }
+
+  const user = await userModel.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    throw new ApiError(400, "User not found.");
+  }
+
+  const isMatch = await user.isPasswordCorrect(password);
+
+  if (!isMatch) {
+    throw new ApiError(401, "Invalid Password!!");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  const loggedInUser = await userModel
+    .findById(user._id)
+    .select("-password -refreshToken");
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      )
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  const user = await userModel.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        refreshToken: "",
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(201, user, "User logout successfully"));
+});
+
+const getUserData = asyncHandler(async (req, res) => {
+  const data = await userModel.find();
+  res.status(200).json(data);
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken = req?.cookies?.refreshToken;
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Unathorized request");
+  }
+
+  const user = await userModel.findById(incomingRefreshToken?._id);
+
+  if (!user) {
+    throw new ApiError(401, "Invalid or Expired token");
+  }
+
+  if (incomingRefreshToken !== user.refreshToken) {
+    throw new ApiError(401, "Invalid or Expired token");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user?._id
+  );
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(new ApiResponse(200, null, "New Refresh token added"));
+});
+
+module.exports = {
+  registerUser,
+  getUserData,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+};
