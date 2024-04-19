@@ -4,6 +4,7 @@ const {
   logoutUser,
   loginUser,
   refreshAccessToken,
+  updateUser,
 } = require("../controllers/user.controller");
 const authMiddleWarejwt = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/multer.middleware");
@@ -27,11 +28,10 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 
-router.route("/data").get(getUserData);
-
 //secured routes : -
 router.route("/logout").get(authMiddleWarejwt, logoutUser);
-
 router.route("/refresh-token").post(refreshAccessToken);
+router.route("/data").get(authMiddleWarejwt, getUserData);
+router.route("/update/:uname").put(authMiddleWarejwt, updateUser);
 
 module.exports = router;

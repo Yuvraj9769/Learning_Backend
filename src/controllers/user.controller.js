@@ -87,15 +87,26 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   const createdUser = await userModel
-    .findById(User._id)
+    .findByIdAndUpdate(User._id)
     .select("-password -refreshToken");
 
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering user!!");
   }
 
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    createdUser._id
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
   return res
     .status(201)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
     .json(new ApiResponse(200, createdUser, "User registered Successfully!!"));
 });
 
@@ -219,10 +230,48 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "New Refresh token added"));
 });
 
+const updateUser = asyncHandler(async (req, res) => {
+  const { uname } = req.params;
+
+  const user = await userModel.findOne({ username: uname });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const { username } = req.body;
+
+  if (!username) {
+    throw new ApiError(401, "Username required to update!!");
+  }
+
+  const updateUser = await userModel.findByIdAndUpdate(
+    user?._id,
+    {
+      $set: {
+        username,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  if (!updateUser) {
+    throw new ApiError(500, "Issue While updating the user");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(201, {
+      updateUser,
+    })
+  );
+});
+
 module.exports = {
   registerUser,
   getUserData,
   loginUser,
   logoutUser,
   refreshAccessToken,
+  updateUser,
 };

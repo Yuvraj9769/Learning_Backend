@@ -9,7 +9,10 @@ const authMiddleWarejwt = asyncHandler(async (req, _, next) => {
       req.cookies?.accessToken ||
       req.header("Authorizatoin").replace("Bearer ", "");
     if (!token) {
-      throw new ApiError(401, "Unauthorized request");
+      throw new ApiError(
+        401,
+        "Unauthorized request \n Please Login or Signup first"
+      );
     }
     const decodedData = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
