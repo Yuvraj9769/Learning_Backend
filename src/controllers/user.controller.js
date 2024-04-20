@@ -174,6 +174,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
+  // const user = await userModel.findById(req.user?._id);
   const user = await userModel.findByIdAndUpdate(
     req.user?._id,
     {
@@ -185,6 +186,11 @@ const logoutUser = asyncHandler(async (req, res) => {
       new: true,
     }
   );
+
+  //or : -
+
+  // user.refreshToken = undefined;
+  // await user.save();
 
   const options = {
     httpOnly: true,
