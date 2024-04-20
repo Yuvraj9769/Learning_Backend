@@ -8,8 +8,6 @@ const {
 const ApiResponse = require("../utils/ApiResponse");
 const userModel = require("../models/user.model");
 
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await userModel.findById(userId);
