@@ -267,6 +267,128 @@ const updateUser = asyncHandler(async (req, res) => {
   );
 });
 
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  //get old and new password from req.body
+  //check user is exist?
+  //if exist then verify its password
+  //if matches then update the password
+  //else throw error
+
+  const { oldPassword, newPassword } = req.body;
+
+  if (oldPassword === newPassword) {
+    throw new ApiError(
+      401,
+      "Old and new Password is same please change new password to update!!"
+    );
+  }
+
+  const user = await userModel.findById(req?.user?._id);
+
+  if (!user) {
+    throw new ApiError(401, "Unauthorized request!!");
+  }
+
+  const isMatch = await user.isPasswordCorrect(oldPassword);
+
+  if (!isMatch) {
+    throw new ApiError(400, "Invalid Password Please enter valid password!!");
+  }
+
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Password updated successfully!!"));
+});
+
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await userModel
+    .findById(req?.user?._id)
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(400, "User not found");
+  }
+
+  return res.status(200).json(new ApiResponse(200, user, "User Profile"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  //extract avatar path from request
+  //find user
+  //upload avatar on cloudinary
+  //update avatar url to new url
+  //send response
+
+  console.log("Called");
+
+  const avatarLocalPath = req.files?.avatar[0].path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is required to update!!");
+  }
+
+  const user = await userModel
+    .findById(req.user?._id)
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(400, "User not found from avatar update");
+  }
+
+  const avatarCloudinaryUrl = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatarCloudinaryUrl) {
+    throw new ApiError(500, "Error occur while updating the avatar");
+  }
+
+  user.avatar = avatarCloudinaryUrl?.url;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar updated successfully!!"));
+});
+
+const updateCoverImage = asyncHandler(async (req, res) => {
+  //get file path from req.files
+  //find user
+  //if user not found then throw error
+  //if user exist then upload the file on cloudinary
+  //if upload is successful then update the cover image field of user
+  //if upload is not successful then throw error
+  //return response
+
+  const coverImageLocalPath = req?.files?.coverImage[0].path;
+
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "CoverImage file is required to update!!");
+  }
+
+  const user = await userModel
+    .findById(req?.user?._id)
+    .select("-password -refreshToken");
+
+  if (!user) {
+    throw new ApiError(404, "User not found!!");
+  }
+
+  const coverImageCloudinaryUrl = await uploadOnCloudinary(coverImageLocalPath);
+
+  if (!coverImageCloudinaryUrl) {
+    throw new ApiError(500, "Error occured during uploading the coverimage");
+  }
+
+  user.coverImage = coverImageCloudinaryUrl?.url;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover Image updated successfully!!"));
+});
+
 module.exports = {
   registerUser,
   getUserData,
@@ -274,4 +396,9 @@ module.exports = {
   logoutUser,
   refreshAccessToken,
   updateUser,
+  changeCurrentPassword,
+  getUserProfile,
+  updateUserAvatar,
+  updateCoverImage,
+  updateCoverImage,
 };
