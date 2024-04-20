@@ -41,18 +41,10 @@ router.route("/update/:uname").put(authMiddleWarejwt, updateUser);
 router.route("/changePassword").put(authMiddleWarejwt, changeCurrentPassword);
 router
   .route("/updateAvatar")
-  .put(
-    authMiddleWarejwt,
-    upload.fields([{ name: "avatar", maxCount: 1 }]),
-    updateUserAvatar
-  );
+  .put(authMiddleWarejwt, upload.single("avatar"), updateUserAvatar);
 
 router
   .route("/updateCoverImage")
-  .put(
-    authMiddleWarejwt,
-    upload.fields([{ name: "coverImage", maxCount: 1 }]),
-    updateCoverImage
-  );
+  .put(authMiddleWarejwt, upload.single("coverImage"), updateCoverImage);
 
 module.exports = router;

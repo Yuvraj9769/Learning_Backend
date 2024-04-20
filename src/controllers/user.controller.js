@@ -4,6 +4,8 @@ const uploadOnCloudinary = require("../utils/cloudinary");
 const ApiResponse = require("../utils/ApiResponse");
 const userModel = require("../models/user.model");
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await userModel.findById(userId);
@@ -322,9 +324,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   //update avatar url to new url
   //send response
 
-  console.log("Called");
-
-  const avatarLocalPath = req.files?.avatar[0].path;
+  const avatarLocalPath = req?.file?.path;
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avatar file is required to update!!");
@@ -361,7 +361,7 @@ const updateCoverImage = asyncHandler(async (req, res) => {
   //if upload is not successful then throw error
   //return response
 
-  const coverImageLocalPath = req?.files?.coverImage[0].path;
+  const coverImageLocalPath = req?.file?.path;
 
   if (!coverImageLocalPath) {
     throw new ApiError(400, "CoverImage file is required to update!!");
