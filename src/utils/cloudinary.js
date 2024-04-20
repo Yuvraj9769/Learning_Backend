@@ -25,4 +25,26 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-module.exports = uploadOnCloudinary;
+const deleteOnCloudinary = async (publicId) => {
+  try {
+    const { result } = await cloudinary.uploader.destroy(publicId); //return {result: "ok"}
+    return result;
+  } catch (error) {
+    console.log("Error while deleting file : ", error);
+    return null;
+  }
+};
+
+const getPublicId = (Imagecloudinaryurl) => {
+  try {
+    const publicId = Imagecloudinaryurl.split("/res.cloudinary.com/")[1]
+      .split("/")[4]
+      .split(".png")[0];
+    return publicId;
+  } catch (error) {
+    console.log("Error while getting public id");
+    return null;
+  }
+};
+
+module.exports = { uploadOnCloudinary, deleteOnCloudinary, getPublicId };

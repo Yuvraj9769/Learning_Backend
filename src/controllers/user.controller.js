@@ -1,6 +1,10 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
-const uploadOnCloudinary = require("../utils/cloudinary");
+const {
+  uploadOnCloudinary,
+  deleteOnCloudinary,
+  getPublicId,
+} = require("../utils/cloudinary");
 const ApiResponse = require("../utils/ApiResponse");
 const userModel = require("../models/user.model");
 
@@ -322,6 +326,8 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   //find user
   //upload avatar on cloudinary
   //update avatar url to new url
+  //get publicId of previous avatar
+  //delete previous avatar from cloudinary using that publicId
   //send response
 
   const avatarLocalPath = req?.file?.path;
@@ -344,8 +350,22 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error occur while updating the avatar");
   }
 
+  const avatarPublibId = getPublicId(user?.avatar);
+
+  if (!avatarPublibId) {
+    throw new ApiError(500, "Image not found!!");
+  }
+
   user.avatar = avatarCloudinaryUrl?.url;
   await user.save({ validateBeforeSave: false });
+
+  const delImageResponse = await deleteOnCloudinary(avatarPublibId);
+
+  if (delImageResponse !== "ok") {
+    throw new ApiError(500, "Error occur while deleting the avatar");
+  }
+
+  // const delImageResponse = await deleteOnCloudinary()
 
   return res
     .status(200)
@@ -358,6 +378,8 @@ const updateCoverImage = asyncHandler(async (req, res) => {
   //if user not found then throw error
   //if user exist then upload the file on cloudinary
   //if upload is successful then update the cover image field of user
+  //get public id to remove the file from cloudinary
+  //delete the file from cloudinary
   //if upload is not successful then throw error
   //return response
 
@@ -381,12 +403,30 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error occured during uploading the coverimage");
   }
 
+  const coverImagePublicId = getPublicId(user?.coverImage);
+
+  if (!coverImagePublicId) {
+    throw new ApiError(400, "Image not found!!");
+  }
+
   user.coverImage = coverImageCloudinaryUrl?.url;
   await user.save({ validateBeforeSave: false });
 
+  const delImageResponse = await deleteOnCloudinary(coverImagePublicId);
+
+  if (delImageResponse !== "ok") {
+    throw new ApiError(500, "Error occured during deleting the coverImage");
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "Cover Image updated successfully!!"));
+    .json(
+      new ApiResponse(
+        200,
+        user,
+        "Cover Image updated successfully and previous image is deleted successfully!!"
+      )
+    );
 });
 
 module.exports = {
