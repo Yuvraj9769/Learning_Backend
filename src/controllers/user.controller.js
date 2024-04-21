@@ -7,6 +7,7 @@ const {
 } = require("../utils/cloudinary");
 const ApiResponse = require("../utils/ApiResponse");
 const userModel = require("../models/user.model");
+const { default: mongoose } = require("mongoose");
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
@@ -180,8 +181,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   const user = await userModel.findByIdAndUpdate(
     req.user?._id,
     {
-      $set: {
-        refreshToken: "",
+      $unset: {
+        refreshToken: 1, //this removes the refreshToken field from the user document
       },
     },
     {
@@ -510,6 +511,58 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, channel[0], "Channel fetched successfully"));
 });
 
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await userModel.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req?.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory",
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  console.log("User = ", user);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, user[0].watchHistory, "User Watch history fetched!!")
+    );
+});
+
 module.exports = {
   registerUser,
   getUserData,
@@ -523,4 +576,5 @@ module.exports = {
   updateCoverImage,
   updateCoverImage,
   getUserChannelProfile,
+  getWatchHistory,
 };

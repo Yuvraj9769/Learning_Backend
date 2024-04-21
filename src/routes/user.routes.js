@@ -10,6 +10,7 @@ const {
   updateUserAvatar,
   updateCoverImage,
   getUserChannelProfile,
+  getWatchHistory,
 } = require("../controllers/user.controller");
 const authMiddleWarejwt = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/multer.middleware");
@@ -38,18 +39,20 @@ router.route("/logout").get(authMiddleWarejwt, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/data").get(authMiddleWarejwt, getUserData);
 router.route("/profile").get(authMiddleWarejwt, getUserProfile);
-router.route("/update/:uname").put(authMiddleWarejwt, updateUser);
-router.route("/changePassword").put(authMiddleWarejwt, changeCurrentPassword);
+router.route("/update/:uname").patch(authMiddleWarejwt, updateUser);
+router.route("/changePassword").patch(authMiddleWarejwt, changeCurrentPassword);
 router
   .route("/updateAvatar")
-  .put(authMiddleWarejwt, upload.single("avatar"), updateUserAvatar);
+  .patch(authMiddleWarejwt, upload.single("avatar"), updateUserAvatar);
 
 router
   .route("/updateCoverImage")
-  .put(authMiddleWarejwt, upload.single("coverImage"), updateCoverImage);
+  .patch(authMiddleWarejwt, upload.single("coverImage"), updateCoverImage);
 
 router
   .route("/getUserChannelProfile/:username")
   .get(authMiddleWarejwt, getUserChannelProfile);
+
+router.route("/History").get(authMiddleWarejwt, getWatchHistory);
 
 module.exports = router;
