@@ -18,8 +18,10 @@ app.use(cookieParser());
 
 //routes  require
 const userRouter = require("./routes/user.routes");
+const videoRouter = require("./routes/video.routes");
 
 //routes  declaration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/videos", videoRouter);
 
 module.exports = app;
