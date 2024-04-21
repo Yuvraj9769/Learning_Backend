@@ -129,8 +129,10 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "User name and email is required.");
   }
 
+  let regUserName = new RegExp(username, "i");
+
   const user = await userModel.findOne({
-    $or: [{ username }, { email }],
+    $or: [{ username: regUserName }, { email }],
   });
 
   if (!user) {
@@ -433,6 +435,81 @@ const updateCoverImage = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req?.params;
+
+  if (!username?.trim()) {
+    throw new ApiError(400, "Username is required!!");
+  }
+
+  let regUserName = new RegExp(username, "i");
+
+  const channel = await userModel.aggregate([
+    {
+      $match: {
+        username: regUserName,
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers", //  "subscribers" field will be stored within each document of the user model. The properties or fields included in the "subscribers" field will be determined by the schema of the "subscriptions" collection, not the user model. So, it will contain fields defined in the "subscriptions" model/schema, such as subscriber, channel, and any other fields present in the "subscriptions" collection.
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        subscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: { $in: [req?.user?._id, "$subscribers.subscriber"] },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        subscribersCount: 1,
+        subscribedToCount: 1,
+        isSubscribed: 1,
+        username: 1,
+        email: 1,
+        avatar: 1,
+        coverImage: 1,
+        subscribedTo: 1,
+        subscribers: 1,
+      },
+    },
+  ]);
+
+  if (!channel?.length) {
+    throw new ApiError(400, "Channel doesnot exist");
+  }
+
+  // console.log(channel[0]);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "Channel fetched successfully"));
+});
+
 module.exports = {
   registerUser,
   getUserData,
@@ -445,4 +522,5 @@ module.exports = {
   updateUserAvatar,
   updateCoverImage,
   updateCoverImage,
+  getUserChannelProfile,
 };

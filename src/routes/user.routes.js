@@ -9,6 +9,7 @@ const {
   getUserProfile,
   updateUserAvatar,
   updateCoverImage,
+  getUserChannelProfile,
 } = require("../controllers/user.controller");
 const authMiddleWarejwt = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/multer.middleware");
@@ -46,5 +47,9 @@ router
 router
   .route("/updateCoverImage")
   .put(authMiddleWarejwt, upload.single("coverImage"), updateCoverImage);
+
+router
+  .route("/getUserChannelProfile/:username")
+  .get(authMiddleWarejwt, getUserChannelProfile);
 
 module.exports = router;
