@@ -1,3 +1,4 @@
+const videoModel = require("../models/video.model");
 const ApiError = require("../utils/ApiError");
 const ApiResponse = require("../utils/ApiResponse");
 const asyncHandler = require("../utils/asyncHandler");
@@ -17,12 +18,23 @@ const uploadVideo = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Video uplaoding failed!!");
   }
 
-  console.log(Video);
-  console.log("Video url = ", Video?.url);
+  console.log("Video url checking = ", Video);
+
+  const videoModelData = {
+    ...req.body,
+    videoFile: Video?.url,
+    duration: Video?.duration,
+    isPublished: true,
+    owner: req.user._id,
+  };
+
+  const uploadedvideo = await videoModel.create(videoModelData);
+
+  console.log(uploadedvideo);
 
   return res
     .status(200)
-    .json(new ApiResponse(200, Video, "Video Uploaded Succesfully!!"));
+    .json(new ApiResponse(200, uploadedvideo, "Video Uploaded Succesfully!!"));
 });
 
 module.exports = { uploadVideo };

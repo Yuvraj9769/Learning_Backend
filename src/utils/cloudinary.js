@@ -39,7 +39,7 @@ const getPublicId = (Imagecloudinaryurl) => {
   try {
     const publicId = Imagecloudinaryurl.split("/res.cloudinary.com/")[1]
       .split("/")[4]
-      .split(".png")[0];
+      .split(/\.(png|mp4)/)[0];
     return publicId;
   } catch (error) {
     console.log("Error while getting public id");

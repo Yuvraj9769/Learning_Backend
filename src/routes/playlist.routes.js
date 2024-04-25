@@ -1,20 +1,20 @@
-const authMiddleWarejwt = require("../middlewares/auth.middleware");
+// const authMiddleWarejwt = require("../middlewares/auth.middleware");
 
-const router = require("express").Router();
+// const router = require("express").Router();
 
-router.use(authMiddleWarejwt);
+// router.use(authMiddleWarejwt);
 
-router.route("/").post(createPlaylist);
+// router.route("/").post(createPlaylist);
 
-router
-  .route("/:playlistId")
-  .get(getPlaylistById)
-  .patch(updatePlaylist)
-  .delete(deletePlaylist);
+// router
+//   .route("/:playlistId")
+//   .get(getPlaylistById)
+//   .patch(updatePlaylist)
+//   .delete(deletePlaylist);
 
-router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
-router.route("/remove/:videoId/:playlistId").patch(removeVideoFromPlaylist);
+// router.route("/add/:videoId/:playlistId").patch(addVideoToPlaylist);
+// router.route("/remove/:videoId/:playlistId").patch(removeVideoFromPlaylist);
 
-router.route("/user/:userId").get(getUserPlaylists);
+// router.route("/user/:userId").get(getUserPlaylists);
 
-module.exports = router;
+// module.exports = router;

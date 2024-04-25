@@ -532,6 +532,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
               foreignField: "_id",
               as: "owner",
               pipeline: [
+                //now i am inside in the owner array
                 {
                   $project: {
                     fullName: 1,
@@ -563,6 +564,40 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     );
 });
 
+const getUploadedVideos = asyncHandler(async (req, res) => {
+  const user = await userModel.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req?.user?._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "_id",
+        foreignField: "owner",
+        as: "VideoUploaded",
+      },
+    },
+    {
+      $addFields: {
+        VideoUploaded: {
+          $first: "$VideoUploaded",
+        },
+        No_Of_VideosUploaded: {
+          $size: "$VideoUploaded",
+        },
+      },
+    },
+  ]);
+
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found"));
+  }
+
+  return res.status(200).json(new ApiResponse(200, user, "Your videos"));
+});
+
 module.exports = {
   registerUser,
   getUserData,
@@ -577,4 +612,5 @@ module.exports = {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  getUploadedVideos,
 };

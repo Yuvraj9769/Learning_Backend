@@ -11,6 +11,7 @@ const {
   updateCoverImage,
   getUserChannelProfile,
   getWatchHistory,
+  getUploadedVideos,
 } = require("../controllers/user.controller");
 const authMiddleWarejwt = require("../middlewares/auth.middleware");
 const upload = require("../middlewares/multer.middleware");
@@ -54,5 +55,6 @@ router
   .get(authMiddleWarejwt, getUserChannelProfile);
 
 router.route("/History").get(authMiddleWarejwt, getWatchHistory);
+router.route("/YourVideos").get(authMiddleWarejwt, getUploadedVideos);
 
 module.exports = router;
