@@ -1,12 +1,18 @@
-const { addComment } = require("../controllers/comment.controller");
+const {
+  addComment,
+  getVideoComments,
+  updateComment,
+  deleteComment,
+} = require("../controllers/comment.controller");
 const authMiddleWarejwt = require("../middlewares/auth.middleware");
 
 const router = require("express").Router();
 
 router.use(authMiddleWarejwt);
 
-// router.route("/:videoId").get(getVideoComments);
+router.route("/getVideocomments/:videoId").get(getVideoComments);
 router.route("/addComment").post(addComment);
-// router.route("/c/:commentId").delete(deleteComment).patch(updateComment);
+router.route("/updateComment/:commentId").patch(updateComment);
+router.route("/:commentId").delete(deleteComment);
 
 module.exports = router;
